@@ -24,6 +24,9 @@ const otpSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+// Index for faster queries and automatic cleanup
+otpSchema.index({ userId: 1, isUsed: 1 });
+
 // Generate OTP method
 otpSchema.statics.generateOTP = function() {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
