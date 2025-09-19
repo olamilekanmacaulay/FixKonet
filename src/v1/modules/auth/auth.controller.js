@@ -33,7 +33,11 @@ exports.requestLoginOtp = async (req, res ) => {
 
     
 
-        res.status(200).json({ message: "OTP sent successfully" });
+        res.status(200).json({ 
+            message: "OTP sent successfully" ,
+            phoneNumber: existingUser.phoneNumber,
+            role: existingUser.role
+        });
     } catch (error) {
         console.error("Error in onboardController:", error);
         res.status(500).json({ message: "Internal server error. Please try again" });
@@ -50,7 +54,7 @@ exports.verifyLoginOtp = async (req, res) => {
         }
 
         // Check if user already exists
-        let existingUser = await user.findOne({ phoneNumber });
+        let existingUser = await User.findOne({ phoneNumber });
         if (!existingUser) {
             return res.status(404).json({ message: "User not found. Please sign up first." });
         }

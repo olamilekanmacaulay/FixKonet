@@ -1,5 +1,6 @@
-const { getChannel } = require("../../../services/rabbitmq/connection.rabbitmq");
-const smsService = require("../../../utils/send_sms");
+const { getChannel } = require("../../services/rabbitmq/connection.rabbitmq");
+const SMSService  = require('../../utils/send_sms');
+const smsService = new SMSService();
 
 async function consumeOTPRequests() {
     try {
@@ -39,4 +40,4 @@ async function consumeOTPRequests() {
 }
      
 
-module.exports = consumeOTPRequests()   ;
+module.exports = consumeOTPRequests;

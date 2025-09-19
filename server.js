@@ -9,6 +9,7 @@ const { createClient}  = require('redis');
 require('dotenv').config();
 const { connectRabbitMQ } = require('./src/v1/services/rabbitmq/connection.rabbitmq');
 const authRoutes = require('./src/v1/modules/auth/auth.route');
+const consumeOTPRequests = require('./src/v1/modules/notifications/otp.consumer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +32,7 @@ mongoose.connect(process.env.MONGO_URI)
 connectRabbitMQ()
     .then(() => {
         console.log("RabbitMQ connection established.");
+        consumeOTPRequests();
     })
     .catch((error) => {
         console.error("Application failed to start due to connection error:", error);
@@ -51,6 +53,7 @@ const redisStore = new RedisStore({
 app.use(session({
   store: redisStore,
   secret: process.env.JWT_SECRET,
+  name: 'sessionId',
   resave: false,
   saveUninitialized: false,
   cookie: {
