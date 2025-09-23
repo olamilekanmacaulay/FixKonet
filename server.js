@@ -41,7 +41,7 @@ connectRabbitMQ()
 
 
 const redisClient = createClient({
-  url: process.env.REDIS_URL
+  url: process.env.REDIS_URL,
 });
 redisClient.connect().catch(console.error);
 const redisStore = new RedisStore({
