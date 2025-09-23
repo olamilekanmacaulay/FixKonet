@@ -109,7 +109,7 @@ exports.logout = async (req, res) => {
                 return res.status(500).json({ message: "Could not log out." });
             }
 
-            res.clearCookie('connect.sid'); // The default session cookie name
+            res.clearCookie('sessionId');
             res.status(200).json({
                 success: true,
                 message: "Logged out successfully."
