@@ -1,8 +1,10 @@
 const User = require("../../models/user.model");
 const OTP = require("../../models/otp.model");
-const AuthPublisher = require("./auth.publisher");
 
-exports.requestLoginOtp = async (req, res ) => {
+const SMSService = require("../../utils/send_sms");
+const smsService = new SMSService();
+
+exports.requestLoginOtp = async (req, res) => {
     try {
         const { phoneNumber, role } = req.body;
         // validate input
@@ -13,13 +15,15 @@ exports.requestLoginOtp = async (req, res ) => {
         // Check if user already exists
         let existingUser = await User.findOne({ phoneNumber });
 
-        if (existingUser) {
-            // If user exists, update their role to what they just selected.
-            existingUser.role = role;
-            await existingUser.save();
-        } else {
+        if (!existingUser) {
             // If user does not exist, create a new one with the selected role.
-            existingUser = await User.create({ phoneNumber, role });
+            existingUser = await User.create({ phoneNumber, roles: [role] });
+        } else {
+            // User exists. Check if they have the requested role.
+            if (role && !existingUser.roles.includes(role)) {
+                existingUser.roles.push(role);
+                await existingUser.save();
+            }
         }
 
         // Generate OTP
@@ -29,14 +33,20 @@ exports.requestLoginOtp = async (req, res ) => {
         await OTP.create({ userId: existingUser._id, otp: hashedOtp });
 
         //publish OTP event
-        await AuthPublisher.publishOTPRequest({ phoneNumber, otp, userId: existingUser._id });
+        // Send OTP directly
+        try {
+            await smsService.sendOTP(phoneNumber, otp);
+        } catch (smsError) {
+            console.error("Failed to send OTP:", smsError);
+            return res.status(500).json({ message: "Failed to send OTP via SMS." });
+        }
 
-    
 
-        res.status(200).json({ 
-            message: "OTP sent successfully" ,
+
+        res.status(200).json({
+            message: "OTP sent successfully",
             phoneNumber: existingUser.phoneNumber,
-            role: existingUser.role
+            roles: existingUser.roles
         });
     } catch (error) {
         console.error("Error in onboardController:", error);
@@ -47,10 +57,10 @@ exports.requestLoginOtp = async (req, res ) => {
 
 exports.verifyLoginOtp = async (req, res) => {
     try {
-        const {phoneNumber, otp } = req.body;
+        const { phoneNumber, otp } = req.body;
         // Validate input
         if (!phoneNumber || !otp) {
-            return res.status(400).json({ message: "Phone number and OTP are required." }); 
+            return res.status(400).json({ message: "Phone number and OTP are required." });
         }
 
         // Check if user already exists
@@ -62,13 +72,13 @@ exports.verifyLoginOtp = async (req, res) => {
         // Find the most recent unused OTP for the user
         const otpRecord = await OTP.findOne({ userId: existingUser._id, isUsed: false }).sort({ createdAt: -1 });
 
-        if (!otpRecord || otpRecord.expiresAt < new Date() ) {
+        if (!otpRecord || otpRecord.expiresAt < new Date()) {
             return res.status(400).json({ message: "OTP is invalid or has expired. Please request a new one." });
         }
 
         // verify otp
         const isMatch = await otpRecord.verifyOTP(otp);
-        if(!isMatch) {
+        if (!isMatch) {
             return res.status(400).json({ message: "The OTP you entered is incorrect." });
         }
 
@@ -80,19 +90,28 @@ exports.verifyLoginOtp = async (req, res) => {
         otpRecord.isUsed = true;
         await otpRecord.save();
 
-       //save user data to session
-       req.session.user = {
-        id: existingUser._id,
-        phoneNumber: existingUser.phoneNumber,
-        role: existingUser.role
-       };
+        //save user data to session
+        // Determine active role
+        const requestedRole = req.body.role;
+        const activeRole = (requestedRole && existingUser.roles.includes(requestedRole))
+            ? requestedRole
+            : existingUser.roles[0];
+
+        req.session.user = {
+            id: existingUser._id,
+            phoneNumber: existingUser.phoneNumber,
+            roles: existingUser.roles,
+            activeRole: activeRole
+        };
 
         // Respond with success and user info, including the sessionId
         res.status(200).json({
             success: true,
             message: "Login successful!",
             sessionId: req.session.id,
-            user: req.session.user
+            user: req.session.user,
+            // Send back the active role as 'role' for frontend compatibility if needed
+            role: activeRole
         });
     } catch (error) {
         console.error("Error in verifyLoginOtp:", error);

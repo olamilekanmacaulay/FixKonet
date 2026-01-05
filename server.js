@@ -5,11 +5,11 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const { RedisStore } = require('connect-redis');
 const session = require('express-session');
-const { createClient}  = require('redis');
+const { createClient } = require('redis');
 require('dotenv').config();
-const { connectRabbitMQ } = require('./src/v1/services/rabbitmq/connection.rabbitmq');
+
+
 const authRoutes = require('./src/v1/modules/auth/auth.route');
-const consumeOTPRequests = require('./src/v1/modules/notifications/otp.consumer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,19 +25,12 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('MongoDB connected');
   })
-  .catch(err => { console.log(err);
-  process.exit(1);
-});
+  .catch(err => {
+    console.log(err);
+    process.exit(1);
+  });
 
-connectRabbitMQ()
-    .then(() => {
-        console.log("RabbitMQ connection established.");
-        consumeOTPRequests();
-    })
-    .catch((error) => {
-        console.error("Application failed to start due to connection error:", error);
-        process.exit(1); // Exit the process if the connection fails
-    });
+
 
 
 const redisClient = createClient({
@@ -62,7 +55,7 @@ app.use(session({
     maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
   }
 }));
-  
+
 // Middleware to attach the single Redis client instance to the request object
 app.use((req, res, next) => {
   req.redisClient = redisClient;

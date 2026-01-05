@@ -1,6 +1,4 @@
-const OTP = require('../models/otp.model');
-const User = require('../models/user.model');
-const axios = require('axios');
+
 const twilio = require('twilio');
 
 class SMSService {
@@ -27,6 +25,6 @@ class SMSService {
         }
     }
 }
-   
+
 
 module.exports = SMSService;

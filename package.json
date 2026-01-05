@@ -32,6 +32,13 @@
     "jest": "^29.7.0",
     "nodemon": "^2.0.22"
   },
+  "_moduleAliases": {
+    "@models": "models",
+    "@config": "config",
+    "@middleware": "middleware",
+    "@utils": "utils"
+
+  },
   "dependencies": {
     "amqplib": "^0.10.9",
     "axios": "^1.12.2",

@@ -9,8 +9,8 @@ const userSchema = new mongoose.Schema({
         required: true,
         trim: true,
         validate: {
-            validator: function(v) {
-                return /^\+?[1-9]\d{1,14}$/.test(v); 
+            validator: function (v) {
+                return /^\+?[1-9]\d{1,14}$/.test(v);
             },
             message: props => `${props.value} is not a valid phone number!`
         }
@@ -21,17 +21,17 @@ const userSchema = new mongoose.Schema({
         trim: true,
         lowercase: true,
         validate: {
-            validator: function(v) {
+            validator: function (v) {
                 return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
             },
             message: props => `${props.value} is not a valid email address!`
         }
     },
-    role: {
-        type: String,
+
+    roles: {
+        type: [String],
         enum: ['client', 'artisan'],
-        default: 'client',
-        required: true
+        default: ['client']
     },
     profilePicture: {
         type: String,
@@ -63,20 +63,18 @@ const userSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-//userSchema.index({ phoneNumber: 1 });
-//userSchema.index({ email: 1 });
 userSchema.index({ role: 1 });
 
 
 // Instance method to update last login
-userSchema.methods.updateLastLogin = async function() {
+userSchema.methods.updateLastLogin = async function () {
     this.lastLogin = new Date();
     await this.save();
     return this;
 };
 
 // Static method to find by phone
-userSchema.statics.findByPhone = function(phoneNumber) {
+userSchema.statics.findByPhone = function (phoneNumber) {
     return this.findOne({ phoneNumber });
 };
 
