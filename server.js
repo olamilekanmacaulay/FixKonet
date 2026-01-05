@@ -6,7 +6,9 @@ const bodyParser = require('body-parser');
 const { RedisStore } = require('connect-redis');
 const session = require('express-session');
 const { createClient } = require('redis');
-require('dotenv').config();
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const config = require('./src/v1/config/vars');
 
 
 const authRoutes = require('./src/v1/modules/auth/auth.route');
@@ -14,14 +16,30 @@ const authRoutes = require('./src/v1/modules/auth/auth.route');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// Security Middleware
+app.use(helmet());
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: config.otp.expiry,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
+
+// CORS
+app.use(cors({
+  origin: config.clientUrl,
+  credentials: true
+}));
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(config.mongo.uri)
   .then(() => {
     console.log('MongoDB connected');
   })
@@ -34,7 +52,7 @@ mongoose.connect(process.env.MONGO_URI)
 
 
 const redisClient = createClient({
-  url: process.env.REDIS_URL,
+  url: config.redis.url,
 });
 redisClient.connect().catch(console.error);
 const redisStore = new RedisStore({
@@ -45,14 +63,14 @@ const redisStore = new RedisStore({
 
 app.use(session({
   store: redisStore,
-  secret: process.env.JWT_SECRET,
+  secret: config.jwtSecret,
   name: 'sessionId',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: config.env === 'production',
     httpOnly: true,
-    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    maxAge: config.session.maxAge
   }
 }));
 

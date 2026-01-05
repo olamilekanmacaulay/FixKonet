@@ -32,16 +32,13 @@ exports.requestLoginOtp = async (req, res) => {
         // Save the hashed OTP to the database, linked to the user
         await OTP.create({ userId: existingUser._id, otp: hashedOtp });
 
-        //publish OTP event
-        // Send OTP directly
+        // Send OTP
         try {
             await smsService.sendOTP(phoneNumber, otp);
         } catch (smsError) {
             console.error("Failed to send OTP:", smsError);
             return res.status(500).json({ message: "Failed to send OTP via SMS." });
         }
-
-
 
         res.status(200).json({
             message: "OTP sent successfully",
@@ -104,13 +101,11 @@ exports.verifyLoginOtp = async (req, res) => {
             activeRole: activeRole
         };
 
-        // Respond with success and user info, including the sessionId
         res.status(200).json({
             success: true,
             message: "Login successful!",
             sessionId: req.session.id,
             user: req.session.user,
-            // Send back the active role as 'role' for frontend compatibility if needed
             role: activeRole
         });
     } catch (error) {
