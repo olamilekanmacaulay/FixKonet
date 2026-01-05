@@ -52,11 +52,7 @@ mongoose.connect(config.mongo.uri)
 
 
 const redisClient = createClient({
-<<<<<<< HEAD
   url: config.redis.url,
-=======
-  url: process.env.REDIS_URL,
->>>>>>> fe1988af3d25f9aa4a63e7a46326250b02fb2876
 });
 redisClient.connect().catch(console.error);
 const redisStore = new RedisStore({
