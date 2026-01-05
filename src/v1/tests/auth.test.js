@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const { requestLoginOtp, verifyLoginOtp } = require('../modules/auth/auth.controller');
 const User = require('../models/user.model');
 const OTP = require('../models/otp.model');
@@ -133,3 +134,25 @@ describe('verifyLoginOtp', () => {
     expect(verifyLoginOtp).toBeDefined();
   });
 });
+=======
+const User = require('@models/user.model');
+const OTP = require('@models/otp.model');
+const { requestLoginOtp, verifyLoginOtp,logout } = require('../auth.controller');
+const { authPublisher } = require('../modules/auth/auth.publisher');
+
+
+const req = { 
+    body: {
+        phoneNumber: '+2349020700831',
+        role: 'artisan'
+    }
+};
+const res = {
+    status: jest.fn().mockReturnThis(),
+    json: jest.fn()
+};
+
+it('')
+jest.mock('@models/user.model');
+
+>>>>>>> fe1988af3d25f9aa4a63e7a46326250b02fb2876
